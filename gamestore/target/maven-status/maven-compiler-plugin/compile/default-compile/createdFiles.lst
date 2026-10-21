@@ -1,4 +1,0 @@
-com\gamestore\repository\GameRepository.class
-com\gamestore\servlet\GameDetailServlet.class
-com\gamestore\servlet\HomeServlet.class
-com\gamestore\model\Game.class

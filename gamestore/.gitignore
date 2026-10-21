@@ -1,0 +1,14 @@
+# Maven 빌드 결과물
+/target/
+
+# Java 컴파일 파일
+*.class
+
+# IDE 설정
+.vscode/
+.idea/
+*.iml
+
+# 운영체제 파일
+.DS_Store
+Thumbs.db
