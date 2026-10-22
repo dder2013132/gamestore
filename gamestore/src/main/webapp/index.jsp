@@ -16,7 +16,7 @@
             <ul>
                 <li><a href="${pageContext.request.contextPath}/home">ホーム</a></li>
                 <li><a href="#">ゲーム一覧</a></li>
-                <li><a href="#">カート</a></li>
+                <li><a href="${pageContext.request.contextPath}/cart">カート</a></li>
             </ul>
         </nav>
     </header>

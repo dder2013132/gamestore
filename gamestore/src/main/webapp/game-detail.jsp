@@ -20,5 +20,9 @@
 
     <!-- TODO: 장르 -->
     <p>ジャンル: ${game.genre}</p>
+    <form action="${pageContext.request.contextPath}/cart" method="post">
+        <input type="hidden" name="gameId" value="${game.id}">
+        <button type="submit">カートに追加</button>
+    </form>
 </body>
 </html>
