@@ -1,6 +1,7 @@
 package com.gamestore.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,11 @@ public class Order {
 
    public LocalDateTime getCreatedAt() {
        return createdAt;
+   }
+
+   public String getFormattedCreatedAt() {
+       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+       return createdAt.format(formatter);
    }
 
    public Order(String orderId, List<Game> games, int totalPrice) {

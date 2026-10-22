@@ -1,6 +1,7 @@
 package com.gamestore.repository;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +24,23 @@ public class OrderRepository {
         return orders.get(orderId);
     }
 
+    public List<Order> searchByOrderId(String keyword) {
+
+        List<Order> result = new ArrayList<>();
+
+        for (Order order : findAll()) {
+            if (order.getOrderId().contains(keyword)) {
+                result.add(order);
+            }
+        }
+
+        return result;
+    }
+
     public List<Order> findAll() {
-        return new ArrayList<>(orders.values());
+        Comparator<Order> comparator = Comparator.comparing(Order::getCreatedAt);
+        List<Order> orderList = new ArrayList<>(orders.values());
+        orderList.sort(comparator.reversed());
+        return orderList;
     }
 }

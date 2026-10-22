@@ -17,6 +17,7 @@
                 <li><a href="${pageContext.request.contextPath}/home">ホーム</a></li>
                 <li><a href="#">ゲーム一覧</a></li>
                 <li><a href="${pageContext.request.contextPath}/cart">カート</a></li>
+                <li><a href="${pageContext.request.contextPath}/orders">注文履歴を見る</a></li>
             </ul>
         </nav>
     </header>
