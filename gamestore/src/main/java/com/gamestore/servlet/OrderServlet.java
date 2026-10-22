@@ -1,10 +1,14 @@
 package com.gamestore.servlet;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.gamestore.model.Game;
+import com.gamestore.model.Order;
 import com.gamestore.repository.GameRepository;
+import com.gamestore.repository.OrderRepository;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -45,6 +49,7 @@ public class OrderServlet extends HttpServlet {
 
         GameRepository gameRepository = new GameRepository();
 
+        List<Game> orderGames = new ArrayList<>();
         int total = 0;
 
         for (Game cartGame : cart) {
@@ -57,8 +62,30 @@ public class OrderServlet extends HttpServlet {
                 return;
             }
 
+            orderGames.add(game);
             total += game.getPrice();
         }
         // 5. 모의 주문 완료 처리
+        OrderRepository orderRepository =
+            (OrderRepository) getServletContext()
+                .getAttribute("orderRepository");
+        
+        if (orderRepository == null) {
+            throw new ServletException("OrderRepository is not initialized");
+        }
+
+        String orderId = UUID.randomUUID().toString();
+
+        Order order = new Order(
+            orderId,
+            orderGames,
+            total);
+        orderRepository.save(order);
+
+        session.removeAttribute("cart");
+
+        response.sendRedirect(
+            request.getContextPath() + "/order/complete?id=" + orderId
+        );
     }
 }

@@ -2,25 +2,28 @@ package com.gamestore.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.gamestore.model.Order;
 
 public class OrderRepository {
 
-    private List<Order> orders = new ArrayList<>();
+    private final Map<String, Order> orders = new ConcurrentHashMap<>();
 
-    public void save(Order order) {
-        // 주문 저장
-        orders.add(order);
+    public boolean save(Order order) {
+        Order existing = orders.putIfAbsent(
+                order.getOrderId(),
+                order);
+
+        return existing == null;
     }
 
     public Order findById(String orderId) {
-        // 주문 ID로 검색
-        for (Order order : orders) {
-            if (order.getOrderId().equals(orderId)) {
-                return order;
-            }
-        }
-        return null;
+        return orders.get(orderId);
+    }
+
+    public List<Order> findAll() {
+        return new ArrayList<>(orders.values());
     }
 }

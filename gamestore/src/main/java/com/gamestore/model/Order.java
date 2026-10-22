@@ -1,12 +1,14 @@
 package com.gamestore.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Order {
-   private String orderId;
-   private List<Game> games;
-   private int totalPrice;
+   private final String orderId;
+   private final List<Game> games;
+   private final int totalPrice;
+   private final LocalDateTime createdAt;
    
    public String getOrderId() {
        return orderId;
@@ -20,9 +22,14 @@ public class Order {
        return totalPrice;
    }
 
+   public LocalDateTime getCreatedAt() {
+       return createdAt;
+   }
+
    public Order(String orderId, List<Game> games, int totalPrice) {
        this.orderId = orderId;
        this.games = new ArrayList<>(games);
        this.totalPrice = totalPrice;
+       this.createdAt = LocalDateTime.now();
    }
 }
