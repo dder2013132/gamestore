@@ -3,7 +3,7 @@ package com.gamestore.servlet;
 import java.io.IOException;
 
 import com.gamestore.model.Game;
-import com.gamestore.repository.GameRepository;
+import com.gamestore.repository.JdbcGameRepository;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,8 +27,9 @@ public class GameDetailServlet extends HttpServlet {
             return;
         }
 
-        GameRepository gameRepository = new GameRepository();
-        Game game = gameRepository.findById(gameId);
+        Game game;
+        JdbcGameRepository gameRepository = new JdbcGameRepository();
+        game = gameRepository.findById(gameId);
 
         if (game == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Game not found");

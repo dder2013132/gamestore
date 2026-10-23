@@ -13,30 +13,54 @@ import com.gamestore.util.DBConnection;
 
 public class JdbcGameRepository {
 
-    public List<Game> findAll() {
+    public List<Game> findAll() throws SQLException, IOException, ClassNotFoundException {
         List<Game> games = new ArrayList<>();
 
         String sql = "SELECT game_id, title, price, genre, image_url FROM games";
 
-try (Connection conn = DBConnection.getConnection();
-     PreparedStatement stmt = conn.prepareStatement(sql);
-     ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
 
-    while (rs.next()) {
-        String id = rs.getString("game_id");
-        String title = rs.getString("title");
-        int price = rs.getInt("price");
-        String genre = rs.getString("genre");
-        String imagePath = rs.getString("image_url");
+            while (rs.next()) {
+                String id = rs.getString("game_id");
+                String title = rs.getString("title");
+                int price = rs.getInt("price");
+                String genre = rs.getString("genre");
+                String imagePath = rs.getString("image_url");
 
-        Game game = new Game(id, title, price, genre, imagePath);
-        games.add(game);
-    }
+                Game game = new Game(id, title, price, genre, imagePath);
+                games.add(game);
+            }
 
-} catch (SQLException | IOException e) {
-    e.printStackTrace();
-}
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
 
         return games;
+    }
+
+    public Game findById(String gameId) {
+        String sql = "SELECT game_id, title, price, genre, image_url "
+                + "FROM games WHERE game_id = ?";
+
+        // 여기부터 직접 구현!
+        try (Connection conn = DBConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, Integer.parseInt(gameId));
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String id = rs.getString("game_id");
+                String title = rs.getString("title");
+                int price = rs.getInt("price");
+                String genre = rs.getString("genre");
+                String imagePath = rs.getString("image_url");
+
+                return new Game(id, title, price, genre, imagePath);
+            }
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

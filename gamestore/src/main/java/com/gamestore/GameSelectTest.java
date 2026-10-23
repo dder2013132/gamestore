@@ -10,7 +10,7 @@ import com.gamestore.util.DBConnection;
 
 public class GameSelectTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
 
         String sql = "SELECT game_id, title, price FROM games";
 

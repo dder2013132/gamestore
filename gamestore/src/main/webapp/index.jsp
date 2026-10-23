@@ -28,7 +28,7 @@
             <c:forEach var="game" items="${games}">
                 <div class="game-card">
                     <img
-                        src="${pageContext.request.contextPath}${game.imagePath}"
+                        src="${pageContext.request.contextPath}/${game.imagePath}"
                         alt="${game.title}">
                     <a href="${pageContext.request.contextPath}/games?id=${game.id}">
                         詳細を見る
