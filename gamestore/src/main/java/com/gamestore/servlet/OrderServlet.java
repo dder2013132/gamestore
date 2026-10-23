@@ -1,13 +1,14 @@
 package com.gamestore.servlet;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import com.gamestore.model.Game;
 import com.gamestore.model.Order;
-import com.gamestore.repository.GameRepository;
+import com.gamestore.repository.JdbcGameRepository;
 import com.gamestore.repository.OrderRepository;
 
 import jakarta.servlet.ServletException;
@@ -47,13 +48,14 @@ public class OrderServlet extends HttpServlet {
 
         // 4. Repository에서 상품을 다시 조회하고 총액 계산
 
-        GameRepository gameRepository = new GameRepository();
+        JdbcGameRepository gameRepository = new JdbcGameRepository();
 
         List<Game> orderGames = new ArrayList<>();
         int total = 0;
 
-        for (Game cartGame : cart) {
-            Game game = gameRepository.findById(cartGame.getId());
+        try {
+            for (Game cartGame : cart) {
+                Game game = gameRepository.findById(cartGame.getId());
 
             if (game == null) {
                 response.sendError(
@@ -62,8 +64,11 @@ public class OrderServlet extends HttpServlet {
                 return;
             }
 
-            orderGames.add(game);
-            total += game.getPrice();
+                orderGames.add(game);
+                total += game.getPrice();
+            }
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            throw new ServletException("Error retrieving game information", e);
         }
         // 5. 모의 주문 완료 처리
         OrderRepository orderRepository =

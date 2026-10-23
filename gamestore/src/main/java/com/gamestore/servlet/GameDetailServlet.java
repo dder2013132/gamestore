@@ -1,6 +1,7 @@
 package com.gamestore.servlet;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 import com.gamestore.model.Game;
 import com.gamestore.repository.JdbcGameRepository;
@@ -29,7 +30,11 @@ public class GameDetailServlet extends HttpServlet {
 
         Game game;
         JdbcGameRepository gameRepository = new JdbcGameRepository();
-        game = gameRepository.findById(gameId);
+        try {
+            game = gameRepository.findById(gameId);
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            throw new ServletException("Error retrieving game details", e);
+        }
 
         if (game == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Game not found");

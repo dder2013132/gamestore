@@ -13,8 +13,8 @@
 
     <!-- TODO: 게임 이미지 -->
     <img class="game-detail-image"
-     src="${pageContext.request.contextPath}${game.imagePath}"
-     alt="${game.title}">
+         src="${pageContext.request.contextPath}/${game.imagePath}"
+         alt="${game.title}">
     <!-- TODO: 가격 -->
     <p>価格: ¥${game.price}</p>
 

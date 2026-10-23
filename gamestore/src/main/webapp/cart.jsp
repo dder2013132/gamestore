@@ -13,6 +13,9 @@
     <body>
         <main>
             <h1>ショッピングカート</h1>
+            <c:if test="${not empty cartMessage}">
+                <p>${cartMessage}</p>
+            </c:if>
             <div class="cart-list">
 
                 <p>合計金額: ¥${totalPrice}</p>

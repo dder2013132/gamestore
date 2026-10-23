@@ -1,0 +1,5 @@
+CREATE TABLE orders (
+    order_id VARCHAR(36) PRIMARY KEY,
+    total_price INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
