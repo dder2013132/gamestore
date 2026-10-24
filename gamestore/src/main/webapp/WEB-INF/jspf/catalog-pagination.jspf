@@ -1,0 +1,23 @@
+<%@ page pageEncoding="UTF-8" %>
+<c:if test="${resultCount > 0}"><p class="catalog-range">${resultCount} 件中 ${firstResult}–${lastResult} 件を表示</p></c:if>
+<c:if test="${pageCount > 1}">
+    <c:url var="paginationBase" value="${empty paginationPath ? '/browse' : paginationPath}">
+        <c:if test="${not empty query}"><c:param name="q" value="${query}" /></c:if>
+        <c:if test="${not empty selectedGenre}"><c:param name="genre" value="${selectedGenre}" /></c:if>
+        <c:param name="sort" value="${sort}" />
+    </c:url>
+    <nav class="pagination" aria-label="${paginationPath == '/wishlist' ? 'お気に入りのページ' : 'ゲーム一覧のページ'}">
+        <c:choose><c:when test="${pageNumber > 1}"><a class="page-step" rel="prev" href="<c:out value='${paginationBase}' />&amp;page=${pageNumber - 1}#catalog">← 前へ</a></c:when>
+            <c:otherwise><span class="page-step is-disabled" aria-disabled="true">← 前へ</span></c:otherwise></c:choose>
+        <div class="page-numbers">
+            <c:if test="${pageStart > 1}"><a href="<c:out value='${paginationBase}' />&amp;page=1#catalog" aria-label="1ページ目">1</a><c:if test="${pageStart > 2}"><span class="page-ellipsis">…</span></c:if></c:if>
+            <c:forEach var="number" begin="${pageStart}" end="${pageEnd}">
+                <c:choose><c:when test="${number == pageNumber}"><span class="is-current" aria-current="page" aria-label="${number}ページ目">${number}</span></c:when>
+                    <c:otherwise><a href="<c:out value='${paginationBase}' />&amp;page=${number}#catalog" aria-label="${number}ページ目">${number}</a></c:otherwise></c:choose>
+            </c:forEach>
+            <c:if test="${pageEnd < pageCount}"><c:if test="${pageEnd < pageCount - 1}"><span class="page-ellipsis">…</span></c:if><a href="<c:out value='${paginationBase}' />&amp;page=${pageCount}#catalog" aria-label="${pageCount}ページ目">${pageCount}</a></c:if>
+        </div>
+        <c:choose><c:when test="${pageNumber < pageCount}"><a class="page-step" rel="next" href="<c:out value='${paginationBase}' />&amp;page=${pageNumber + 1}#catalog">次へ →</a></c:when>
+            <c:otherwise><span class="page-step is-disabled" aria-disabled="true">次へ →</span></c:otherwise></c:choose>
+    </nav>
+</c:if>

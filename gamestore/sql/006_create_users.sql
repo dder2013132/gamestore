@@ -1,0 +1,7 @@
+CREATE TABLE users (
+    user_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    username VARCHAR(30) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT valid_username CHECK (username ~ '^[a-z0-9_]{4,30}$')
+);

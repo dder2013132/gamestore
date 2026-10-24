@@ -1,0 +1,17 @@
+<%@ page pageEncoding="UTF-8" %>
+<div class="wishlist-control">
+    <c:choose><c:when test="${not empty sessionScope.loginUser}">
+        <form method="post" action="${pageContext.request.contextPath}/wishlist/${wishlistIds[game.id] ? 'remove' : 'add'}">
+            <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+            <input type="hidden" name="gameId" value="${game.id}">
+            <input type="hidden" name="returnTo" value="<c:out value='${empty wishlistReturnTo ? "/wishlist" : wishlistReturnTo}' />">
+            <button class="wishlist-button ${wishlistIds[game.id] ? 'is-saved' : ''}" type="submit" aria-pressed="${wishlistIds[game.id] == true}" aria-label="<c:out value='${game.title}' /> ${wishlistIds[game.id] ? 'をお気に入りから削除' : 'をお気に入りに追加'}">
+                <svg viewBox="0 0 24 24" fill="${wishlistIds[game.id] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+            </button>
+        </form>
+    </c:when><c:otherwise>
+        <a class="wishlist-button" href="${pageContext.request.contextPath}/wishlist?gameId=${game.id}" aria-label="ログインして <c:out value='${game.title}' /> をお気に入りに追加">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        </a>
+    </c:otherwise></c:choose>
+</div>

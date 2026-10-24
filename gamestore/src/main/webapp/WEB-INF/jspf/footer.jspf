@@ -1,0 +1,11 @@
+<%@ page pageEncoding="UTF-8" %>
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div><a class="wordmark" href="${pageContext.request.contextPath}/home">playport<span class="brand-dot">✳</span></a>
+            <p>ゲームを見つける、小さな寄り道。</p></div>
+        <nav aria-label="フッターメニュー"><a href="${pageContext.request.contextPath}/browse">ゲームを探す</a>
+            <a href="${pageContext.request.contextPath}/wishlist">お気に入り</a>
+            <a href="${pageContext.request.contextPath}/cart">カート</a><a href="${pageContext.request.contextPath}/orders">注文履歴</a></nav>
+        <span class="footer-note">A little play goes a long way.</span>
+    </div>
+</footer>

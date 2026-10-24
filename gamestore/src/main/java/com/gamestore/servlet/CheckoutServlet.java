@@ -2,46 +2,42 @@ package com.gamestore.servlet;
 
 import java.io.IOException;
 import java.util.List;
-
+import java.sql.SQLException;
 import com.gamestore.model.Game;
-
+import com.gamestore.model.User;
+import com.gamestore.repository.JdbcGameRepository;
+import com.gamestore.service.CartCatalog;
+import com.gamestore.util.AuthSession;
+import com.gamestore.util.CheckoutTokens;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
-
+    private final JdbcGameRepository games;
+    public CheckoutServlet() { this(new JdbcGameRepository()); }
+    CheckoutServlet(JdbcGameRepository games) { this.games = games; }
     @Override
-    protected void doGet(
-        HttpServletRequest request,
-        HttpServletResponse response
-    ) throws ServletException, IOException {
-
-        // 1. 세션에서 장바구니 가져오기
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        // 2. 장바구니가 비어 있는지 확인
-        if (session == null) {
-            response.sendRedirect("cart");
-            return;
+        User user = AuthSession.currentUser(request);
+        if (session == null || user == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+        synchronized (session) {
+            @SuppressWarnings("unchecked") List<Game> cart = (List<Game>) session.getAttribute("cart");
+            if (cart == null || cart.isEmpty()) { response.sendRedirect(request.getContextPath() + "/cart"); return; }
+            try { cart = CartCatalog.refresh(cart, games); }
+            catch (SQLException | IOException | ClassNotFoundException e) { throw new ServletException("Unable to refresh checkout", e); }
+            session.setAttribute("cart", cart);
+            if (CartCatalog.blocked(cart)) {
+                session.setAttribute("cartMessage", "販売休止中の商品、または金額上限を超える商品があります。カートを確認してください。");
+                response.sendRedirect(request.getContextPath() + "/cart");
+                return;
+            }
+            request.setAttribute("cart", List.copyOf(cart));
+            request.setAttribute("total", cart.stream().mapToLong(Game::getPrice).sum());
+            request.setAttribute("checkoutToken", CheckoutTokens.prepare(session, user.getId(), cart).token());
         }
-        @SuppressWarnings("unchecked")
-        List<Game> cart = (List<Game>) session.getAttribute("cart");
-        if (cart == null || cart.isEmpty()) {
-            response.sendRedirect("cart");
-            return;
-        }
-        // 3. 서버의 상품 가격으로 총액 계산
-        int total = 0;
-        for(Game g : cart) {
-            total += g.getPrice();
-        }
-        // 4. checkout.jsp로 전달
-        request.setAttribute("cart", cart);
-        request.setAttribute("total", total);
         request.getRequestDispatcher("/checkout.jsp").forward(request, response);
     }
 }

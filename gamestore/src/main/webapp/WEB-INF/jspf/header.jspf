@@ -1,0 +1,35 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<header class="site-header">
+    <div class="header-inner">
+        <a class="brand" href="${pageContext.request.contextPath}/home" aria-label="PLAYPORT ホーム">
+            <span class="wordmark">playport<span class="brand-dot" aria-hidden="true">✳</span></span>
+            <span class="brand-tagline">YOUR LITTLE GAME CORNER</span>
+        </a>
+        <nav class="primary-nav" aria-label="メインメニュー">
+            <a class="${navSection == 'home' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/home">ホーム</a>
+            <a class="${navSection == 'browse' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/browse">ゲーム一覧</a>
+            <a class="${navSection == 'wishlist' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/wishlist">お気に入り</a>
+            <a class="${navSection == 'orders' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/orders">注文履歴</a>
+            <c:if test="${sessionScope.loginUser.admin}">
+                <a class="${navSection == 'admin' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/admin/games">ゲーム管理</a>
+            </c:if>
+        </nav>
+        <div class="header-actions">
+            <a class="cart-link" href="${pageContext.request.contextPath}/cart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4h2l2.5 11h11l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                カート<c:if test="${not empty sessionScope.cart}"><span class="cart-count">${fn:length(sessionScope.cart)}</span></c:if>
+            </a>
+            <c:choose>
+                <c:when test="${not empty sessionScope.loginUser}">
+                    <span class="account-name"><c:out value="${sessionScope.loginUser.username}" /> さん</span>
+                    <form action="${pageContext.request.contextPath}/logout" method="post">
+                        <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                        <button class="nav-button" type="submit">ログアウト</button>
+                    </form>
+                </c:when>
+                <c:otherwise><a class="button button-secondary button-small" href="${pageContext.request.contextPath}/login">ログイン</a></c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</header>

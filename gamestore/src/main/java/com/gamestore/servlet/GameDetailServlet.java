@@ -5,6 +5,8 @@ import java.sql.SQLException;
 
 import com.gamestore.model.Game;
 import com.gamestore.repository.JdbcGameRepository;
+import com.gamestore.repository.JdbcWishlistRepository;
+import com.gamestore.service.WishlistView;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,6 +16,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/games")
 public class GameDetailServlet extends HttpServlet {
+    private final JdbcGameRepository games;
+    private final JdbcWishlistRepository wishes;
+    public GameDetailServlet() { this(new JdbcGameRepository(), new JdbcWishlistRepository()); }
+    GameDetailServlet(JdbcGameRepository games, JdbcWishlistRepository wishes) { this.games = games; this.wishes = wishes; }
 
     @Override
     protected void doGet(
@@ -29,9 +35,9 @@ public class GameDetailServlet extends HttpServlet {
         }
 
         Game game;
-        JdbcGameRepository gameRepository = new JdbcGameRepository();
         try {
-            game = gameRepository.findById(gameId);
+            game = games.findById(gameId);
+            WishlistView.populate(request, wishes);
         } catch (SQLException | IOException | ClassNotFoundException e) {
             throw new ServletException("Error retrieving game details", e);
         }

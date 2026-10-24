@@ -1,46 +1,21 @@
 package com.gamestore.repository;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.gamestore.model.Order;
 
-public class OrderRepository {
+public interface OrderRepository {
+    void save(Order order) throws SQLException, IOException, ClassNotFoundException;
 
-    private final Map<String, Order> orders = new ConcurrentHashMap<>();
+    String saveOnce(Order order, String checkoutToken) throws SQLException, IOException, ClassNotFoundException;
 
-    public boolean save(Order order) {
-        Order existing = orders.putIfAbsent(
-                order.getOrderId(),
-                order);
+    String findIdByCheckoutToken(String checkoutToken, long userId) throws SQLException, IOException, ClassNotFoundException;
 
-        return existing == null;
-    }
+    Order findByIdForUser(String orderId, long userId)
+            throws SQLException, IOException, ClassNotFoundException;
 
-    public Order findById(String orderId) {
-        return orders.get(orderId);
-    }
-
-    public List<Order> searchByOrderId(String keyword) {
-
-        List<Order> result = new ArrayList<>();
-
-        for (Order order : findAll()) {
-            if (order.getOrderId().contains(keyword)) {
-                result.add(order);
-            }
-        }
-
-        return result;
-    }
-
-    public List<Order> findAll() {
-        Comparator<Order> comparator = Comparator.comparing(Order::getCreatedAt);
-        List<Order> orderList = new ArrayList<>(orders.values());
-        orderList.sort(comparator.reversed());
-        return orderList;
-    }
+    List<Order> findForUser(long userId, String keyword)
+            throws SQLException, IOException, ClassNotFoundException;
 }

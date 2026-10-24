@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.gamestore.model.Game;
+import com.gamestore.util.CheckoutTokens;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,11 +26,15 @@ public class CartRemoveServlet extends HttpServlet {
             HttpSession session = request.getSession(false);
 
             if (session != null) {
+                synchronized (session) {
                 @SuppressWarnings("unchecked")
                 List<Game> cart = (List<Game>) session.getAttribute("cart");
                 if (cart != null) {
-                    cart.removeIf(game -> game.getId().equals(gameId));
+                    cart = new java.util.ArrayList<>(cart);
+                    boolean removed = cart.removeIf(game -> game.getId().equals(gameId));
                     session.setAttribute("cart", cart);
+                    if (removed) { CheckoutTokens.cartChanged(session); }
+                }
                 }
             }
         }

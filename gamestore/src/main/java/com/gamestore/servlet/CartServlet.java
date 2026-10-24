@@ -7,6 +7,10 @@ import java.util.List;
 
 import com.gamestore.model.Game;
 import com.gamestore.repository.JdbcGameRepository;
+import com.gamestore.service.CartCatalog;
+import com.gamestore.util.CheckoutTokens;
+import com.gamestore.service.WishlistView;
+import com.gamestore.repository.JdbcWishlistRepository;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +21,9 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/cart")
 public class CartServlet extends HttpServlet {
+    private final JdbcGameRepository games;
+    public CartServlet() { this(new JdbcGameRepository()); }
+    CartServlet(JdbcGameRepository games) { this.games = games; }
 
     @Override
     protected void doPost(
@@ -33,10 +40,9 @@ public class CartServlet extends HttpServlet {
         }
 
         // 3. GameRepository에서 게임 검색
-        JdbcGameRepository gameRepository = new JdbcGameRepository();
         Game game;
         try {
-            game = gameRepository.findById(gameId);
+            game = games.findById(gameId);
         } catch (SQLException | IOException | ClassNotFoundException e) {
             throw new ServletException("Error retrieving game details", e);
         }
@@ -45,25 +51,36 @@ public class CartServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Game not found");
             return;
         }
+        if (!game.isActive()) {
+            try { WishlistView.populate(request, new JdbcWishlistRepository()); }
+            catch (SQLException | ClassNotFoundException e) { throw new ServletException("Unable to load wishlist state", e); }
+            response.setStatus(HttpServletResponse.SC_CONFLICT);
+            request.setAttribute("game", game);
+            request.getRequestDispatcher("/game-detail.jsp").forward(request, response);
+            return;
+        }
 
         HttpSession session = request.getSession();
 
+        synchronized (session) {
         @SuppressWarnings("unchecked")
         List<Game> cart = (List<Game>) session.getAttribute("cart");
 
         if (cart == null) {
             cart = new ArrayList<>();
-            session.setAttribute("cart", cart);
-        }
+        } else { cart = new ArrayList<>(cart); }
         for (Game g : cart) {
             if (g.getId().equals(game.getId())) {
                 // 이미 장바구니에 있는 경우 추가하지 않고 종료
-                session.setAttribute("cartMessage", "이미 장바구니에 있는 게임입니다.");
+                session.setAttribute("cartMessage", "このゲームはすでにカートに入っています。");
                 response.sendRedirect(request.getContextPath() + "/cart");
                 return;
             }
         }
         cart.add(game);
+        session.setAttribute("cart", cart);
+        CheckoutTokens.cartChanged(session);
+        }
         response.sendRedirect(request.getContextPath() + "/cart");
     }
 
@@ -77,6 +94,7 @@ public class CartServlet extends HttpServlet {
         List<Game> cart = null;
 
         if (session != null) {
+            synchronized (session) {
             @SuppressWarnings("unchecked")
             List<Game> savedCart = (List<Game>) session.getAttribute("cart");
             String message = (String) session.getAttribute("cartMessage");
@@ -86,18 +104,21 @@ public class CartServlet extends HttpServlet {
                 // 여기서 세션의 cartMessage를 삭제!
             }
             cart = savedCart;
+            try { cart = CartCatalog.refresh(cart, games); }
+            catch (SQLException | IOException | ClassNotFoundException e) { throw new ServletException("Unable to refresh cart", e); }
+            session.setAttribute("cart", cart);
+            cart = List.copyOf(cart);
+            }
         }
 
         if (cart == null) {
             cart = new ArrayList<>();
         }
 
-        int totalPrice = 0;
-        for (Game g : cart) {
-            totalPrice += g.getPrice();
-        }
+        long totalPrice = cart.stream().mapToLong(Game::getPrice).sum();
 
         request.setAttribute("cart", cart);
+        request.setAttribute("cartBlocked", CartCatalog.blocked(cart));
         request.setAttribute("totalPrice", totalPrice);
         request.getRequestDispatcher("/cart.jsp")
                 .forward(request, response);

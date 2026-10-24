@@ -8,5 +8,6 @@
             "mainClass": "com.JdbcGameRepositoryTest",
             "cwd": "${workspaceFolder}/gamestore"
         }
-    ]
+    ],
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

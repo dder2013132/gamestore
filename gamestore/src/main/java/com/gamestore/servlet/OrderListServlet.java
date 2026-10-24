@@ -1,10 +1,12 @@
 package com.gamestore.servlet;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import com.gamestore.model.Order;
 import com.gamestore.repository.OrderRepository;
+import com.gamestore.util.AuthSession;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,12 +27,14 @@ public class OrderListServlet extends HttpServlet {
 
         OrderRepository orderRepository = (OrderRepository) getServletContext().getAttribute("orderRepository");
 
+        if (orderRepository == null) {
+            throw new ServletException("OrderRepository is not initialized");
+        }
         List<Order> result;
-
-        if (orderId != null && !orderId.isBlank()) {
-            result = orderRepository.searchByOrderId(orderId);
-        } else {
-            result = orderRepository.findAll();
+        try {
+            result = orderRepository.findForUser(AuthSession.currentUser(request).getId(), orderId);
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            throw new ServletException("Could not retrieve orders", e);
         }
         request.setAttribute("orders", result);
         request.getRequestDispatcher("/orders.jsp")

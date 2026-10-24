@@ -10,6 +10,11 @@ public class Order {
    private final List<Game> games;
    private final int totalPrice;
    private final LocalDateTime createdAt;
+   private final Long userId;
+
+   public Long getUserId() {
+       return userId;
+   }
    
    public String getOrderId() {
        return orderId;
@@ -33,9 +38,18 @@ public class Order {
    }
 
    public Order(String orderId, List<Game> games, int totalPrice) {
+       this(orderId, games, totalPrice, null);
+   }
+
+   public Order(String orderId, List<Game> games, int totalPrice, Long userId) {
+       this(orderId, games, totalPrice, userId, LocalDateTime.now());
+   }
+
+   public Order(String orderId, List<Game> games, int totalPrice, Long userId, LocalDateTime createdAt) {
        this.orderId = orderId;
        this.games = new ArrayList<>(games);
        this.totalPrice = totalPrice;
-       this.createdAt = LocalDateTime.now();
+       this.createdAt = createdAt;
+       this.userId = userId;
    }
 }

@@ -1,9 +1,11 @@
 package com.gamestore.servlet;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 import com.gamestore.model.Order;
 import com.gamestore.repository.OrderRepository;
+import com.gamestore.util.AuthSession;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -33,8 +35,13 @@ public class OrderCompleteServlet extends HttpServlet {
         if (orderRepository == null) {
             throw new ServletException("OrderRepository is not initialized");
         }
-        // 4. findById()로 주문 조회
-        Order order = orderRepository.findById(orderId);
+        // 4. DB에서 현재 회원의 주문만 조회
+        Order order;
+        try {
+            order = orderRepository.findByIdForUser(orderId, AuthSession.currentUser(request).getId());
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            throw new ServletException("Could not retrieve order", e);
+        }
 
         // 5. 주문이 없다면 404
         if (order == null) {

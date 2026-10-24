@@ -1,0 +1,14 @@
+<%@ page pageEncoding="UTF-8" %>
+<article class="game-card">
+    <a class="game-card-art" href="${pageContext.request.contextPath}/games?id=${game.id}" aria-label="<c:out value='${game.title}' /> の詳細を見る">
+        <img loading="lazy" src="${pageContext.request.contextPath}/<c:out value='${game.imagePath}' />" alt="<c:out value='${game.title}' />">
+        <span class="card-arrow" aria-hidden="true">↗</span>
+    </a>
+    <%@ include file="/WEB-INF/jspf/wishlist-button.jspf" %>
+    <c:if test="${not game.active}"><span class="sale-status is-paused card-sale-status">販売休止中</span></c:if>
+    <div class="game-card-body"><span class="genre-label"><c:out value="${game.genre}" /></span>
+        <h3><a href="${pageContext.request.contextPath}/games?id=${game.id}"><c:out value="${game.title}" /></a></h3>
+        <div class="game-card-bottom"><span class="card-caption">次の冒険を見つけよう</span>
+            <span class="price">¥<fmt:formatNumber value="${game.price}" pattern="#,##0" /></span></div>
+    </div>
+</article>

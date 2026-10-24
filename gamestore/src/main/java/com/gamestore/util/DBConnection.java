@@ -2,6 +2,7 @@ package com.gamestore.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -12,12 +13,18 @@ public class DBConnection {
     public static Connection getConnection()
             throws SQLException, IOException, ClassNotFoundException {
 
-        // 다음 미션에서 db.properties 읽기
+        // Use an external path in Tomcat; retain the local development fallback.
         Properties props = new Properties();
-        try (FileInputStream fis =
-            new FileInputStream("db.properties")) {
-                props.load(fis);
+        String configPath = System.getenv("GAMESTORE_DB_CONFIG");
+        if (configPath != null && !configPath.isBlank()) {
+            try (InputStream input = new FileInputStream(configPath)) {
+                props.load(input);
             }
+        } else {
+            try (InputStream input = new FileInputStream("db.properties")) {
+                props.load(input);
+            }
+        }
         String url = props.getProperty("db.url");
         String user = props.getProperty("db.user");
         String password = props.getProperty("db.password");
