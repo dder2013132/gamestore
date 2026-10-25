@@ -1,7 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
 <div class="wishlist-control">
     <c:choose><c:when test="${not empty sessionScope.loginUser}">
-        <form method="post" action="${pageContext.request.contextPath}/wishlist/${wishlistIds[game.id] ? 'remove' : 'add'}">
+        <form method="post" action="${pageContext.request.contextPath}/wishlist/${wishlistIds[game.id] ? 'remove' : 'add'}" data-wishlist-form data-game-id="${game.id}" data-saved="${wishlistIds[game.id] == true}" data-title="<c:out value='${game.title}' />" data-add-url="${pageContext.request.contextPath}/wishlist/add" data-remove-url="${pageContext.request.contextPath}/wishlist/remove" data-login-url="${pageContext.request.contextPath}/login">
             <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
             <input type="hidden" name="gameId" value="${game.id}">
             <input type="hidden" name="returnTo" value="<c:out value='${empty wishlistReturnTo ? "/wishlist" : wishlistReturnTo}' />">

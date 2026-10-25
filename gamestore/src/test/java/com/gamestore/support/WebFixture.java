@@ -4,6 +4,9 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConfig;
@@ -18,6 +21,11 @@ public class WebFixture {
     public final Map<String, Object> attributes = new HashMap<>();
     public final Map<String, String> parameters = new HashMap<>();
     public final Map<String, Object> contextValues = new HashMap<>();
+    public final Map<String, String> requestHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public final Map<String, String> responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public final StringWriter responseBody = new StringWriter();
+    public String contentType;
+    public String characterEncoding;
     public Set<String> imagePaths = Set.of("/images/aetherbound.png", "/images/neon_drift.jpg");
     public boolean sessionExists;
     public boolean invalidated;
@@ -53,10 +61,12 @@ public class WebFixture {
     public final HttpServletRequest request = proxy(HttpServletRequest.class, (name, args) -> {
         switch (name) {
             case "getMethod": return method;
+            case "getProtocol": return "HTTP/1.1";
             case "getServletPath": return path;
             case "getContextPath": return "/gamestore";
             case "getServletContext": return context;
             case "getParameter": return parameters.get(args[0]);
+            case "getHeader": return requestHeaders.get(args[0]);
             case "getAttribute": return attributes.get(args[0]);
             case "setAttribute": attributes.put((String) args[0], args[1]); return null;
             case "getSession":
@@ -77,6 +87,10 @@ public class WebFixture {
         switch (name) {
             case "sendRedirect": redirect = (String) args[0]; status = 302; return null;
             case "setStatus": case "sendError": status = (Integer) args[0]; return null;
+            case "getWriter": return new PrintWriter(responseBody);
+            case "setContentType": contentType = (String) args[0]; return null;
+            case "setCharacterEncoding": characterEncoding = (String) args[0]; return null;
+            case "setHeader": responseHeaders.put((String) args[0], (String) args[1]); return null;
             default: return null;
         }
     });

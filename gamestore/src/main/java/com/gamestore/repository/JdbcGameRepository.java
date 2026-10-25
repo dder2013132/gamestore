@@ -11,6 +11,7 @@ import java.util.Locale;
 
 import com.gamestore.model.Game;
 import com.gamestore.model.CatalogPage;
+import com.gamestore.model.GameDetails;
 import com.gamestore.util.DBConnection;
 
 public class JdbcGameRepository {
@@ -147,9 +148,28 @@ public class JdbcGameRepository {
 
     public Game create(String title, int price, String genre, String imagePath, String description)
             throws SQLException, IOException, ClassNotFoundException {
+        try (Connection conn = connections.open()) { return insert(conn, title, price, genre, imagePath, description); }
+    }
+
+    public Game create(String title, int price, String genre, String imagePath, String description, GameDetails details)
+            throws SQLException, IOException, ClassNotFoundException {
+        try (Connection conn = connections.open()) {
+            conn.setAutoCommit(false);
+            try {
+                Game game = insert(conn, title, price, genre, imagePath, description);
+                JdbcGameDetailsRepository.save(conn, Integer.parseInt(game.getId()), details);
+                conn.commit(); return game;
+            } catch (SQLException | RuntimeException e) {
+                try { conn.rollback(); } catch (SQLException rollback) { e.addSuppressed(rollback); }
+                throw e;
+            }
+        }
+    }
+
+    private Game insert(Connection conn, String title, int price, String genre, String imagePath, String description) throws SQLException {
         String sql = "INSERT INTO games (title, price, genre, image_url, description) VALUES (?, ?, ?, ?, ?) "
                 + "RETURNING game_id, title, price, genre, image_url, description, is_active";
-        try (Connection conn = connections.open(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, title);
             stmt.setInt(2, price);
             stmt.setString(3, genre);
@@ -184,7 +204,28 @@ public class JdbcGameRepository {
             throws SQLException, IOException, ClassNotFoundException {
         Integer id = positiveId(gameId);
         if (id == null) { return false; }
-        try (Connection conn = connections.open(); PreparedStatement stmt = conn.prepareStatement(
+        try (Connection conn = connections.open()) { return updateInConnection(conn, id, title, price, genre, imagePath, description); }
+    }
+
+    public boolean update(String gameId, String title, int price, String genre, String imagePath, String description, GameDetails details)
+            throws SQLException, IOException, ClassNotFoundException {
+        Integer id = positiveId(gameId);
+        if (id == null) { return false; }
+        try (Connection conn = connections.open()) {
+            conn.setAutoCommit(false);
+            try {
+                boolean updated = updateInConnection(conn, id, title, price, genre, imagePath, description);
+                if (updated) { JdbcGameDetailsRepository.save(conn, id, details); }
+                conn.commit(); return updated;
+            } catch (SQLException | RuntimeException e) {
+                try { conn.rollback(); } catch (SQLException rollback) { e.addSuppressed(rollback); }
+                throw e;
+            }
+        }
+    }
+
+    private boolean updateInConnection(Connection conn, int id, String title, int price, String genre, String imagePath, String description) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(
                 "UPDATE games SET title = ?, price = ?, genre = ?, image_url = ?, description = ? WHERE game_id = ?")) {
             stmt.setString(1, title);
             stmt.setInt(2, price);

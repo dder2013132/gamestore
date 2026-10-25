@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.gamestore.model.Game;
-import com.gamestore.repository.JdbcGameRepository;
+import com.gamestore.model.HomePage;
+import com.gamestore.repository.JdbcHomeRepository;
 import com.gamestore.repository.JdbcWishlistRepository;
 import com.gamestore.service.WishlistView;
 
@@ -20,12 +20,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
-    private final JdbcGameRepository gameRepository;
+    private final JdbcHomeRepository home;
     private final JdbcWishlistRepository wishes;
 
-    public HomeServlet() { this(new JdbcGameRepository()); }
-    HomeServlet(JdbcGameRepository gameRepository) { this(gameRepository, new JdbcWishlistRepository()); }
-    HomeServlet(JdbcGameRepository gameRepository, JdbcWishlistRepository wishes) { this.gameRepository = gameRepository; this.wishes = wishes; }
+    public HomeServlet() { this(new JdbcHomeRepository(), new JdbcWishlistRepository()); }
+    HomeServlet(JdbcHomeRepository home, JdbcWishlistRepository wishes) { this.home = home; this.wishes = wishes; }
     @Override
     protected void doGet(
             HttpServletRequest request,
@@ -42,22 +41,16 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/browse?" + String.join("&", legacyQuery));
             return;
         }
-        List<Game> games;
-
         try {
-            games = gameRepository.findAll().stream().filter(Game::isActive).toList();
+            HomePage result = home.findHome();
             WishlistView.populate(request, wishes);
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new ServletException("게임 목록 조회 실패", e);
+            request.setAttribute("home", result);
+            request.setAttribute("spotlight", result.getSpotlight());
+        } catch (SQLException | IOException | ClassNotFoundException e) {
+            getServletContext().log("Home discovery could not be retrieved", e);
+            response.setStatus(503);
+            request.setAttribute("homeError", "ゲームの情報を取得できませんでした。少し時間をおいて、もう一度お試しください。");
         }
-
-        // Highlight actual catalog products, preferring the cozy covers already prepared for the store.
-        List<Game> picks = new ArrayList<>(games);
-        picks.sort(java.util.Comparator.comparingInt(game -> String.valueOf(game.getImagePath()).contains("ember_express") ? 0
-                : String.valueOf(game.getImagePath()).contains("moonlit_harvest") ? 1 : String.valueOf(game.getImagePath()).contains("aetherbound") ? 2 : 3));
-        request.setAttribute("spotlight", picks.isEmpty() ? null : picks.get(0));
-        request.setAttribute("picks", picks.stream().limit(3).toList());
-        request.setAttribute("catalogCount", games.size());
         request.getRequestDispatcher("/index.jsp")
                 .forward(request, response);
     }

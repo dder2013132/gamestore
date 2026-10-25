@@ -1,0 +1,6 @@
+<%@ page pageEncoding="UTF-8" %>
+<nav class="admin-nav" aria-label="管理メニュー">
+    <a class="filter-chip ${navSection == 'adminDashboard' ? 'is-selected' : ''}" href="${pageContext.request.contextPath}/admin/dashboard">ダッシュボード</a>
+    <a class="filter-chip ${navSection == 'admin' ? 'is-selected' : ''}" href="${pageContext.request.contextPath}/admin/games">ゲーム管理</a>
+    <a class="filter-chip ${navSection == 'adminOrders' ? 'is-selected' : ''}" href="${pageContext.request.contextPath}/admin/orders">注文管理</a>
+</nav>

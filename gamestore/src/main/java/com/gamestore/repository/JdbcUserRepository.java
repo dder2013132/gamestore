@@ -60,6 +60,31 @@ public class JdbcUserRepository {
         return PasswordHasher.verify(password, hash) ? user : null;
     }
 
+    /** Compare-and-set prevents two concurrent password changes from overwriting each other. */
+    public boolean changePassword(long userId, String currentPassword, String newPassword)
+            throws SQLException, IOException, ClassNotFoundException {
+        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 128
+                || newPassword.equals(currentPassword)) {
+            throw new IllegalArgumentException("Invalid new password");
+        }
+        try (Connection conn = connections.open()) {
+            String oldHash;
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT password_hash FROM users WHERE user_id = ?")) {
+                stmt.setLong(1, userId);
+                try (ResultSet rows = stmt.executeQuery()) {
+                    if (!rows.next()) { return false; }
+                    oldHash = rows.getString("password_hash");
+                }
+            }
+            if (!PasswordHasher.verify(currentPassword, oldHash)) { return false; }
+            String newHash = PasswordHasher.hash(newPassword);
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE users SET password_hash = ? WHERE user_id = ? AND password_hash = ?")) {
+                stmt.setString(1, newHash); stmt.setLong(2, userId); stmt.setString(3, oldHash);
+                return stmt.executeUpdate() == 1;
+            }
+        }
+    }
+
     public User findById(long id) throws SQLException, IOException, ClassNotFoundException {
         try (Connection conn = connections.open();
                 PreparedStatement stmt = conn.prepareStatement("SELECT user_id, username, role FROM users WHERE user_id = ?")) {

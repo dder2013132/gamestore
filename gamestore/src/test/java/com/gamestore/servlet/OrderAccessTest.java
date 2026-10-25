@@ -62,4 +62,12 @@ public class OrderAccessTest extends TestCase {
         assertEquals("/order-complete.jsp", web.forwarded);
         assertEquals("alice-order", ((Order) web.attributes.get("order")).getOrderId());
     }
+
+    public void testOrderLookupFailureShowsRetryInsteadOfSuccess() throws Exception {
+        MemoryOrders orders = new MemoryOrders(); orders.failure = new java.sql.SQLException("private database detail");
+        WebFixture web = loggedIn(orders); web.parameters.put("id", "alice-order");
+        OrderCompleteServlet servlet = new OrderCompleteServlet(); servlet.init(web.config); servlet.doGet(web.request, web.response);
+        assertEquals(503, web.status); assertNotNull(web.attributes.get("pageError")); assertNull(web.attributes.get("order"));
+        assertEquals("/order-complete.jsp", web.forwarded);
+    }
 }

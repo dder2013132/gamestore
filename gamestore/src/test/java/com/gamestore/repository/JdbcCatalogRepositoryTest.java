@@ -46,6 +46,111 @@ public class JdbcCatalogRepositoryTest {
     private JdbcUserRepository users() { return new JdbcUserRepository(JdbcCatalogRepositoryTest::connection); }
     private JdbcOrderRepository orders() { return new JdbcOrderRepository(JdbcCatalogRepositoryTest::connection); }
     private JdbcWishlistRepository wishes() { return new JdbcWishlistRepository(JdbcCatalogRepositoryTest::connection); }
+    private JdbcAccountRepository accounts() { return new JdbcAccountRepository(JdbcCatalogRepositoryTest::connection); }
+
+    @Test
+    public void accountRecentOrdersExposeCurrentPaymentAndCancellationStates() throws Exception {
+        User user = users().create("account_states", "long-test-password");
+        Game game = games().findById("7");
+        for (String id : List.of("pending-state", "completed-state", "cancelled-state")) {
+            orders().save(new Order(id, List.of(game), game.getPrice(), user.getId()));
+        }
+        orders().completeDemoForUser("completed-state", user.getId()); orders().cancelPendingForUser("cancelled-state", user.getId());
+        var result = accounts().findForUser(user.getId()); assertEquals(3L, result.orderCount());
+        assertTrue(result.recentOrders().stream().anyMatch(Order::isPending));
+        assertTrue(result.recentOrders().stream().anyMatch(Order::isCompleted));
+        assertTrue(result.recentOrders().stream().anyMatch(Order::isCancelled));
+    }
+
+    @Test
+    public void accountOverviewShowsOnlyOwnCountsAndThreeMostRecentRecords() throws Exception {
+        User alice = users().create("account_alice", "long-test-password"), bobby = users().create("account_bobby", "long-test-password");
+        var time = java.time.LocalDateTime.of(2026, 10, 25, 12, 0);
+        List<Game> games = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Game game = games().create("Saved game " + i, 1000 + i, "Adventure", "images/aetherbound.png"); games.add(game);
+            wishes().add(alice.getId(), Integer.parseInt(game.getId()));
+            orders().save(new Order("alice-order-" + i, List.of(game), game.getPrice(), alice.getId(), time));
+        }
+        wishes().add(bobby.getId(), 7);
+        orders().save(new Order("bobby-private-order", List.of(games().findById("7")), 1000, bobby.getId(), time.plusDays(1)));
+        try (Connection conn = connection(); PreparedStatement stmt = conn.prepareStatement("UPDATE wishlist_items SET created_at = ? WHERE user_id = ?")) {
+            stmt.setObject(1, time); stmt.setLong(2, alice.getId()); stmt.executeUpdate();
+        }
+        var result = accounts().findForUser(alice.getId());
+        assertEquals("account_alice", result.username()); assertNotNull(result.joinedAt());
+        assertEquals(5L, result.orderCount()); assertEquals(5L, result.wishlistCount());
+        assertEquals(List.of("alice-order-4", "alice-order-3", "alice-order-2"), result.recentOrders().stream().map(Order::getOrderId).toList());
+        assertEquals(List.of(games.get(4).getId(), games.get(3).getId(), games.get(2).getId()), result.recentWishes().stream().map(Game::getId).toList());
+        assertTrue(result.recentOrders().stream().allMatch(o -> o.getUserId() == alice.getId()));
+        assertEquals(1, accounts().findForUser(bobby.getId()).recentOrders().size());
+        assertEquals("bobby-private-order", accounts().findForUser(bobby.getId()).recentOrders().get(0).getOrderId());
+    }
+
+    @Test
+    public void accountOverviewDistinguishesNewMemberAndMissingAccount() throws Exception {
+        User user = users().create("empty_account", "long-test-password");
+        var result = accounts().findForUser(user.getId());
+        assertEquals(0L, result.orderCount()); assertEquals(0L, result.wishlistCount());
+        assertTrue(result.recentOrders().isEmpty()); assertTrue(result.recentWishes().isEmpty());
+        assertNull(accounts().findForUser(-1L));
+    }
+
+    @Test
+    public void accountOverviewRetainsPausedWishesAndOriginalOrderPrices() throws Exception {
+        User user = users().create("paused_account", "long-test-password");
+        Game game = games().create("Later game", 2400, "Adventure", "images/aetherbound.png");
+        wishes().add(user.getId(), Integer.parseInt(game.getId()));
+        orders().save(new Order("paused-account-order", List.of(game), 2400, user.getId()));
+        try (Connection conn = connection(); PreparedStatement stmt = conn.prepareStatement("UPDATE games SET is_active = FALSE, price = 9999 WHERE game_id = ?")) {
+            stmt.setInt(1, Integer.parseInt(game.getId())); stmt.executeUpdate();
+        }
+        var result = accounts().findForUser(user.getId());
+        assertEquals(1L, result.wishlistCount()); assertFalse(result.recentWishes().get(0).isActive());
+        assertEquals(2400, result.recentOrders().get(0).getTotalPrice());
+    }
+
+    @Test
+    public void passwordChangeVerifiesCurrentPasswordAndAffectsOnlyChosenAccount() throws Exception {
+        User user = users().create("password_alice", "original-password"), other = users().create("password_bobby", "other-password");
+        assertFalse(users().changePassword(user.getId(), "incorrect-password", "changed-password"));
+        assertNotNull(users().authenticate(user.getUsername(), "original-password"));
+        assertTrue(users().changePassword(user.getId(), "original-password", "changed-password"));
+        assertNull(users().authenticate(user.getUsername(), "original-password"));
+        assertNotNull(users().authenticate(user.getUsername(), "changed-password"));
+        assertNotNull(users().authenticate(other.getUsername(), "other-password"));
+        assertEquals("USER", users().findById(user.getId()).getRole());
+        assertFalse(users().changePassword(-1L, "original-password", "changed-password"));
+    }
+
+    @Test
+    public void passwordChangePreservesSpacesAndRejectsInvalidNewPassword() throws Exception {
+        User user = users().create("password_spaces", "original-password");
+        for (String password : new String[] {null, "short", "x".repeat(129), "original-password"}) {
+            try { users().changePassword(user.getId(), "original-password", password); fail("Invalid password accepted"); }
+            catch (IllegalArgumentException expected) { }
+        }
+        String next = " " + "x".repeat(126) + " ";
+        assertTrue(users().changePassword(user.getId(), "original-password", next));
+        assertNotNull(users().authenticate(user.getUsername(), next)); assertNull(users().authenticate(user.getUsername(), next.trim()));
+    }
+
+    @Test
+    public void simultaneousPasswordChangesCannotBothReplaceTheSamePassword() throws Exception {
+        User user = users().create("password_race", "original-password");
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var first = pool.submit(() -> { start.await(); return users().changePassword(user.getId(), "original-password", "first-password"); });
+            var second = pool.submit(() -> { start.await(); return users().changePassword(user.getId(), "original-password", "second-password"); });
+            start.countDown();
+            boolean one = first.get(15, java.util.concurrent.TimeUnit.SECONDS), two = second.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(one ^ two);
+            assertNotNull(users().authenticate(user.getUsername(), one ? "first-password" : "second-password"));
+            assertNull(users().authenticate(user.getUsername(), one ? "second-password" : "first-password"));
+            assertNull(users().authenticate(user.getUsername(), "original-password"));
+        } finally { pool.shutdownNow(); }
+    }
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -59,7 +164,7 @@ public class JdbcCatalogRepositoryTest {
             stmt.execute("CREATE TABLE games (game_id INTEGER PRIMARY KEY, title VARCHAR(200), price INTEGER, genre VARCHAR(50), image_url VARCHAR(500), description TEXT)");
             stmt.execute("INSERT INTO games (game_id, title, price, genre, image_url) VALUES (7, 'Existing Game', 1000, 'Adventure', 'images/existing.jpg')");
             for (String file : List.of("006_create_users.sql", "004_create_orders.sql", "005_create_order_items.sql",
-                    "007_add_order_user.sql", "008_add_user_role.sql", "012_add_game_sale_status.sql", "014_order_checkout_tokens.sql", "015_create_wishlist.sql")) {
+                    "007_add_order_user.sql", "008_add_user_role.sql", "012_add_game_sale_status.sql", "014_order_checkout_tokens.sql", "015_create_wishlist.sql", "016_order_status.sql")) {
                 stmt.execute(Files.readString(Path.of("sql", file)));
             }
         }

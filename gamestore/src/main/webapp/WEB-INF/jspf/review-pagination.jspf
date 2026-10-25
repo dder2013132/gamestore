@@ -1,0 +1,14 @@
+<%@ page pageEncoding="UTF-8" %>
+<c:if test="${reviews.totalCount > 0}"><p class="catalog-range">${reviews.totalCount} 件中 ${reviews.firstResult}–${reviews.lastResult} 件を表示</p></c:if>
+<c:if test="${reviews.pageCount > 1}">
+    <c:url var="reviewPageBase" value="${reviewListPath}"><c:if test="${reviewListPath == '/games'}"><c:param name="id" value="${reviewGameId}" /></c:if><c:param name="reviewPage" value="1" /></c:url>
+    <nav class="pagination" aria-label="レビューのページ">
+        <c:choose><c:when test="${reviews.page > 1}"><c:url var="reviewPrev" value="${reviewListPath}"><c:if test="${reviewListPath == '/games'}"><c:param name="id" value="${reviewGameId}" /></c:if><c:param name="reviewPage" value="${reviews.page - 1}" /></c:url><a rel="prev" href="<c:out value='${reviewPrev}' />#reviews">← 前へ</a></c:when><c:otherwise><span class="page-step is-disabled" aria-disabled="true">← 前へ</span></c:otherwise></c:choose>
+        <div class="page-numbers">
+            <c:if test="${reviews.pageStart > 1}"><a href="<c:out value='${reviewPageBase}' />#reviews" aria-label="1ページ目">1</a><c:if test="${reviews.pageStart > 2}"><span class="page-ellipsis">…</span></c:if></c:if>
+            <c:forEach var="number" begin="${reviews.pageStart}" end="${reviews.pageEnd}"><c:choose><c:when test="${number == reviews.page}"><span class="is-current" aria-current="page" aria-label="${number}ページ目">${number}</span></c:when><c:otherwise><c:url var="reviewNumberUrl" value="${reviewListPath}"><c:if test="${reviewListPath == '/games'}"><c:param name="id" value="${reviewGameId}" /></c:if><c:param name="reviewPage" value="${number}" /></c:url><a href="<c:out value='${reviewNumberUrl}' />#reviews" aria-label="${number}ページ目">${number}</a></c:otherwise></c:choose></c:forEach>
+            <c:if test="${reviews.pageEnd < reviews.pageCount}"><c:if test="${reviews.pageEnd < reviews.pageCount - 1}"><span class="page-ellipsis">…</span></c:if><c:url var="reviewLastUrl" value="${reviewListPath}"><c:if test="${reviewListPath == '/games'}"><c:param name="id" value="${reviewGameId}" /></c:if><c:param name="reviewPage" value="${reviews.pageCount}" /></c:url><a href="<c:out value='${reviewLastUrl}' />#reviews" aria-label="${reviews.pageCount}ページ目">${reviews.pageCount}</a></c:if>
+        </div>
+        <c:choose><c:when test="${reviews.page < reviews.pageCount}"><c:url var="reviewNext" value="${reviewListPath}"><c:if test="${reviewListPath == '/games'}"><c:param name="id" value="${reviewGameId}" /></c:if><c:param name="reviewPage" value="${reviews.page + 1}" /></c:url><a rel="next" href="<c:out value='${reviewNext}' />#reviews">次へ →</a></c:when><c:otherwise><span class="page-step is-disabled" aria-disabled="true">次へ →</span></c:otherwise></c:choose>
+    </nav>
+</c:if>

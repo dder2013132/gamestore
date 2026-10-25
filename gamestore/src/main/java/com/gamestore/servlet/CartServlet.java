@@ -8,6 +8,7 @@ import java.util.List;
 import com.gamestore.model.Game;
 import com.gamestore.repository.JdbcGameRepository;
 import com.gamestore.service.CartCatalog;
+import com.gamestore.service.OwnershipView;
 import com.gamestore.util.CheckoutTokens;
 import com.gamestore.service.WishlistView;
 import com.gamestore.repository.JdbcWishlistRepository;
@@ -49,6 +50,13 @@ public class CartServlet extends HttpServlet {
         // 4. 존재하지 않으면 404 반환
         if (game == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Game not found");
+            return;
+        }
+        if (OwnershipView.owns(request, game.getId())) {
+            response.setStatus(HttpServletResponse.SC_CONFLICT);
+            request.setAttribute("cartMessage", "このゲームはすでにライブラリにあります。もう一度購入する必要はありません。");
+            request.setAttribute("alreadyOwnedAdd", true);
+            doGet(request, response);
             return;
         }
         if (!game.isActive()) {
@@ -118,7 +126,9 @@ public class CartServlet extends HttpServlet {
         long totalPrice = cart.stream().mapToLong(Game::getPrice).sum();
 
         request.setAttribute("cart", cart);
-        request.setAttribute("cartBlocked", CartCatalog.blocked(cart));
+        boolean owned = OwnershipView.overlaps(request, cart);
+        request.setAttribute("cartOwned", owned);
+        request.setAttribute("cartBlocked", owned || CartCatalog.blocked(cart));
         request.setAttribute("totalPrice", totalPrice);
         request.getRequestDispatcher("/cart.jsp")
                 .forward(request, response);

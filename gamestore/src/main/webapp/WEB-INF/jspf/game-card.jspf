@@ -8,7 +8,12 @@
     <c:if test="${not game.active}"><span class="sale-status is-paused card-sale-status">販売休止中</span></c:if>
     <div class="game-card-body"><span class="genre-label"><c:out value="${game.genre}" /></span>
         <h3><a href="${pageContext.request.contextPath}/games?id=${game.id}"><c:out value="${game.title}" /></a></h3>
-        <div class="game-card-bottom"><span class="card-caption">次の冒険を見つけよう</span>
+        <c:if test="${not empty homeEntry}"><div class="home-card-metric"><c:choose>
+            <c:when test="${discoveryKind == 'popular'}"><span><strong><fmt:formatNumber value="${homeEntry.buyerCount}" pattern="#,##0" /></strong> 人が購入</span></c:when>
+            <c:when test="${discoveryKind == 'rated'}"><span class="home-rating"><span aria-hidden="true">★</span> <fmt:formatNumber value="${homeEntry.averageRating}" pattern="0.0" /> <small>/ 5</small></span><span><fmt:formatNumber value="${homeEntry.reviewCount}" pattern="#,##0" /> 件のレビュー</span></c:when>
+            <c:otherwise><span class="home-new-label">NEW ON THE SHELF</span></c:otherwise>
+        </c:choose></div></c:if>
+        <div class="game-card-bottom ${ownedIds[game.id] ? 'is-owned' : ''}"><c:choose><c:when test="${ownedIds[game.id]}"><a class="owned-card-label" href="${pageContext.request.contextPath}/library">✓ ライブラリに追加済み</a></c:when><c:otherwise><span class="card-caption">次の冒険を見つけよう</span></c:otherwise></c:choose>
             <span class="price">¥<fmt:formatNumber value="${game.price}" pattern="#,##0" /></span></div>
     </div>
 </article>

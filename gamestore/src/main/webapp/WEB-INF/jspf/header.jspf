@@ -9,10 +9,12 @@
         <nav class="primary-nav" aria-label="メインメニュー">
             <a class="${navSection == 'home' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/home">ホーム</a>
             <a class="${navSection == 'browse' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/browse">ゲーム一覧</a>
-            <a class="${navSection == 'wishlist' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/wishlist">お気に入り</a>
-            <a class="${navSection == 'orders' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/orders">注文履歴</a>
+            <a class="${navSection == 'library' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/library">ライブラリ</a>
+            <a class="${navSection == 'account' or navSection == 'wishlist' or navSection == 'orders' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/account">マイページ</a>
             <c:if test="${sessionScope.loginUser.admin}">
+                <a class="${navSection == 'adminDashboard' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/admin/dashboard">ダッシュボード</a>
                 <a class="${navSection == 'admin' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/admin/games">ゲーム管理</a>
+                <a class="${navSection == 'adminOrders' ? 'is-current' : ''}" href="${pageContext.request.contextPath}/admin/orders">注文管理</a>
             </c:if>
         </nav>
         <div class="header-actions">
@@ -22,7 +24,7 @@
             </a>
             <c:choose>
                 <c:when test="${not empty sessionScope.loginUser}">
-                    <span class="account-name"><c:out value="${sessionScope.loginUser.username}" /> さん</span>
+                    <a class="account-name" href="${pageContext.request.contextPath}/account"><c:out value="${sessionScope.loginUser.username}" /> さん</a>
                     <form action="${pageContext.request.contextPath}/logout" method="post">
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <button class="nav-button" type="submit">ログアウト</button>

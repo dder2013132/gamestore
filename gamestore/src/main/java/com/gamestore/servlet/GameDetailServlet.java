@@ -7,6 +7,9 @@ import com.gamestore.model.Game;
 import com.gamestore.repository.JdbcGameRepository;
 import com.gamestore.repository.JdbcWishlistRepository;
 import com.gamestore.service.WishlistView;
+import com.gamestore.service.ReviewView;
+import com.gamestore.repository.JdbcReviewRepository;
+import com.gamestore.repository.JdbcGameDetailsRepository;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -18,8 +21,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class GameDetailServlet extends HttpServlet {
     private final JdbcGameRepository games;
     private final JdbcWishlistRepository wishes;
-    public GameDetailServlet() { this(new JdbcGameRepository(), new JdbcWishlistRepository()); }
-    GameDetailServlet(JdbcGameRepository games, JdbcWishlistRepository wishes) { this.games = games; this.wishes = wishes; }
+    private final JdbcReviewRepository reviews;
+    private final JdbcGameDetailsRepository details;
+    public GameDetailServlet() { this(new JdbcGameRepository(), new JdbcWishlistRepository(), new JdbcReviewRepository(), new JdbcGameDetailsRepository()); }
+    GameDetailServlet(JdbcGameRepository games, JdbcWishlistRepository wishes, JdbcReviewRepository reviews, JdbcGameDetailsRepository details) {
+        this.games = games; this.wishes = wishes; this.reviews = reviews; this.details = details;
+    }
 
     @Override
     protected void doGet(
@@ -48,6 +55,18 @@ public class GameDetailServlet extends HttpServlet {
         }
 
         request.setAttribute("game", game);
+        try { request.setAttribute("gameDetails", details.findForGame(game.getId())); }
+        catch (SQLException | IOException | ClassNotFoundException e) {
+            getServletContext().log("Game details could not be retrieved", e);
+            response.setStatus(503);
+            request.setAttribute("gameDetailsError", "ゲームの詳しい情報を取得できませんでした。しばらくしてから、もう一度お試しください。");
+        }
+        try { ReviewView.populate(request, reviews, Integer.parseInt(game.getId())); }
+        catch (SQLException | IOException | ClassNotFoundException e) {
+            getServletContext().log("Game reviews could not be retrieved", e);
+            response.setStatus(503);
+            request.setAttribute("reviewError", "レビューを取得できませんでした。しばらくしてから、もう一度お試しください。");
+        }
         request.getRequestDispatcher("/game-detail.jsp")
         .forward(request, response);
     }

@@ -7,6 +7,7 @@ import com.gamestore.model.Game;
 import com.gamestore.model.User;
 import com.gamestore.repository.JdbcGameRepository;
 import com.gamestore.service.CartCatalog;
+import com.gamestore.service.OwnershipView;
 import com.gamestore.util.AuthSession;
 import com.gamestore.util.CheckoutTokens;
 import jakarta.servlet.ServletException;
@@ -29,6 +30,11 @@ public class CheckoutServlet extends HttpServlet {
             try { cart = CartCatalog.refresh(cart, games); }
             catch (SQLException | IOException | ClassNotFoundException e) { throw new ServletException("Unable to refresh checkout", e); }
             session.setAttribute("cart", cart);
+            if (OwnershipView.overlaps(request, cart)) {
+                session.setAttribute("cartMessage", "すでにライブラリにあるゲームが含まれています。該当するゲームをカートから削除してください。");
+                response.sendRedirect(request.getContextPath() + "/cart");
+                return;
+            }
             if (CartCatalog.blocked(cart)) {
                 session.setAttribute("cartMessage", "販売休止中の商品、または金額上限を超える商品があります。カートを確認してください。");
                 response.sendRedirect(request.getContextPath() + "/cart");

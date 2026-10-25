@@ -1,0 +1,8 @@
+<%@ page pageEncoding="UTF-8" %>
+<c:url var="adminOrdersBase" value="/admin/orders">
+    <c:if test="${not empty query}"><c:param name="q" value="${query}" /></c:if>
+    <c:if test="${not empty fromDate}"><c:param name="from" value="${fromDate}" /></c:if>
+    <c:if test="${not empty toDate}"><c:param name="to" value="${toDate}" /></c:if>
+    <c:if test="${not empty selectedStatus}"><c:param name="status" value="${selectedStatus}" /></c:if>
+    <c:param name="page" value="${empty requestedPage ? '1' : requestedPage}" />
+</c:url>

@@ -4,3 +4,18 @@
 <label for="genre">ジャンル</label><input id="genre" name="genre" maxlength="50" placeholder="例：Adventure" required value="<c:out value='${formGenre}' />">
 <label for="description">ゲームの説明（任意）</label><textarea id="description" name="description" rows="7" maxlength="${descriptionLimit}" aria-describedby="description-help" placeholder="どんな世界で、どんな冒険が待っていますか？"><c:out value="${formDescription}" /></textarea><small id="description-help">${descriptionLimit}文字以内。改行はそのまま表示されます。HTMLは使わず、文章で入力してください。</small>
 <label for="imagePath">カバー画像</label><select id="imagePath" name="imagePath" required data-cover-picker data-context-path="${pageContext.request.contextPath}"><option value="">画像を選択してください</option><c:forEach var="image" items="${imageOptions}"><option value="<c:out value='${image}' />" <c:if test="${formImage == image}">selected</c:if>><c:out value="${fn:substringAfter(image, 'images/')}" /></option></c:forEach></select><small>用意されたカバーから選べます。選ぶとプレビューが表示されます。</small><img class="cover-preview" data-cover-preview hidden alt="選択したカバー画像のプレビュー">
+<fieldset class="game-extra-fields"><legend>ゲームの詳しい情報（任意）</legend>
+<label for="developer">開発元</label><input id="developer" name="developer" maxlength="100" placeholder="例：Little Moon Studio" value="<c:out value='${formDeveloper}' />">
+<label for="releaseDate">発売日</label><input id="releaseDate" name="releaseDate" type="date" min="1000-01-01" max="9999-12-31" value="<c:out value='${formReleaseDate}' />">
+<label for="supportedLanguages">対応言語</label><input id="supportedLanguages" name="supportedLanguages" maxlength="200" placeholder="例：日本語・한국어・English" value="<c:out value='${formLanguages}' />">
+<p class="field-help">未入力の項目は、ゲーム詳細に「未登録」と表示されます。</p>
+</fieldset>
+<fieldset class="game-extra-fields"><legend>ギャラリー画像（最大6枚）</legend>
+<p class="field-help" id="gallery-help">番号の順に表示されます。不要な枠は「画像なし」を選んでください。新しい画像は images/screenshots フォルダーに追加して再配布してください。</p>
+<div class="screenshot-slots"><c:forEach var="slot" begin="0" end="5"><c:set var="selectedShot" value="${formScreenshots[slot]}" />
+<div class="screenshot-slot"><label for="screenshot${slot + 1}">画像 ${slot + 1}</label><select id="screenshot${slot + 1}" name="screenshot${slot + 1}" data-screenshot-picker data-context-path="${pageContext.request.contextPath}" aria-describedby="gallery-help"><option value="">画像なし</option>
+<c:if test="${not empty selectedShot and not screenshotOptions.contains(selectedShot)}"><option selected value="<c:out value='${selectedShot}' />">現在の画像が見つかりません</option></c:if>
+<c:forEach var="shot" items="${screenshotOptions}"><option value="<c:out value='${shot}' />" <c:if test="${selectedShot == shot}">selected</c:if>><c:out value="${fn:substringAfter(shot, 'images/screenshots/')}" /></option></c:forEach></select>
+<img class="screenshot-preview" data-screenshot-preview hidden alt="ギャラリー画像 ${slot + 1} のプレビュー"></div></c:forEach></div>
+<label for="galleryNote">画像の補足（任意）</label><textarea id="galleryNote" name="galleryNote" maxlength="200" rows="3" placeholder="例：架空ゲームのイメージ画像です。"><c:out value="${formGalleryNote}" /></textarea>
+</fieldset>

@@ -10,6 +10,22 @@ import jakarta.servlet.ServletException;
 import junit.framework.TestCase;
 
 public class CartAvailabilityTest extends TestCase {
+    public void testOwnedGameCannotBeAddedByDirectPostAndOtherCartItemsStay() throws Exception {
+        WebFixture web = cart(); web.parameters.put("gameId", "1"); web.attributes.put("ownedIds", java.util.Map.of("1", true));
+        Object original = web.sessionValues.get("cart");
+        new CartServlet(new Games()).doPost(web.request, web.response);
+        assertEquals(409, web.status); assertEquals(1, ((List<?>) web.sessionValues.get("cart")).size());
+        assertEquals("/cart.jsp", web.forwarded); assertEquals(true, web.attributes.get("alreadyOwnedAdd"));
+        assertEquals(true, web.attributes.get("cartBlocked")); assertNotNull(web.attributes.get("cartMessage"));
+    }
+    public void testStaleCartWithNewlyOwnedGameStaysVisibleButCannotProceedToCheckout() throws Exception {
+        WebFixture web = cart(); web.attributes.put("ownedIds", java.util.Map.of("1", true));
+        new CartServlet(new Games()).doGet(web.request, web.response);
+        assertEquals(true, web.attributes.get("cartOwned")); assertEquals(true, web.attributes.get("cartBlocked"));
+        new CheckoutServlet(new Games()).doGet(web.request, web.response);
+        assertEquals("/gamestore/cart", web.redirect); assertNotNull(web.sessionValues.get("cartMessage"));
+        assertNull(web.attributes.get("checkoutToken")); assertEquals(1, ((List<?>) web.sessionValues.get("cart")).size());
+    }
     private static class Games extends JdbcGameRepository {
         Game current = new Game("1", "Updated title", 5900, "Adventure", "updated.png");
         SQLException failure;

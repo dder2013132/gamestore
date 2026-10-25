@@ -1,0 +1,5 @@
+<%@ page pageEncoding="UTF-8" %>
+<nav class="collection-nav" aria-label="自分のゲームと注文">
+    <a class="filter-chip ${navSection == 'library' ? 'is-selected' : ''}" href="${pageContext.request.contextPath}/library">ライブラリ</a>
+    <a class="filter-chip ${navSection == 'orders' ? 'is-selected' : ''}" href="${pageContext.request.contextPath}/orders">注文履歴</a>
+</nav>

@@ -45,8 +45,9 @@ public final class AuthSession {
             return gameDestination(destination.substring("/games?id=".length()));
         }
         // Only these local GET endpoints are allowed after login.
-        return "/wishlist".equals(destination) || "/cart".equals(destination) || "/checkout".equals(destination) || "/orders".equals(destination)
-                || "/admin/games".equals(destination) ? destination : "/home";
+        return "/library".equals(destination) || "/account".equals(destination) || "/account/password".equals(destination) || "/account/reviews".equals(destination)
+                || "/wishlist".equals(destination) || "/cart".equals(destination) || "/checkout".equals(destination) || "/orders".equals(destination)
+                || "/admin/dashboard".equals(destination) || "/admin/games".equals(destination) || "/admin/orders".equals(destination) ? destination : "/home";
     }
 
     public static String gameDestination(String gameId) {

@@ -1,0 +1,23 @@
+<%@ page pageEncoding="UTF-8" %>
+<section class="reviews-section" id="reviews" aria-labelledby="game-reviews-title">
+    <div class="section-heading"><div><span class="eyebrow">LITTLE WORDS FROM FELLOW PLAYERS</span><h2 id="game-reviews-title">みんなのレビュー</h2></div></div>
+    <c:choose><c:when test="${not empty reviewError}"><p class="auth-error" role="alert"><c:out value="${reviewError}" /></p><a class="section-link" href="${pageContext.request.contextPath}/games?id=${game.id}#reviews">レビューを読み直す →</a></c:when>
+    <c:when test="${empty reviews}"><p class="review-help">レビューは <a class="section-link" href="${pageContext.request.contextPath}/games?id=${game.id}#reviews">ゲーム詳細から確認できます →</a></p></c:when>
+    <c:otherwise>
+        <div class="panel review-summary"><div><span class="review-summary-label">平均評価</span><c:choose><c:when test="${reviews.totalCount > 0}"><strong><fmt:formatNumber value="${reviews.averageRating}" pattern="0.0" /><small> / 5</small></strong><span>${reviews.totalCount} 件のレビュー</span></c:when><c:otherwise><strong>—<small> / 5</small></strong><span>レビューはまだありません</span></c:otherwise></c:choose></div>
+            <div class="review-summary-action"><p>注文を完了した方の感想を、次の冒険のヒントに。</p>
+                <c:choose><c:when test="${not empty ownReview}"><a class="button button-secondary button-small" href="${pageContext.request.contextPath}/reviews/edit?gameId=${game.id}">自分のレビューを編集</a></c:when>
+                    <c:when test="${canReview}"><a class="button button-small" href="${pageContext.request.contextPath}/reviews/edit?gameId=${game.id}">レビューを書く ＋</a></c:when>
+                    <c:when test="${empty sessionScope.loginUser}"><a class="button button-secondary button-small" href="${pageContext.request.contextPath}/reviews/edit?gameId=${game.id}">ログインしてレビューを書く</a></c:when>
+                    <c:otherwise><span class="review-help">注文完了後にレビューを書けます。</span><a class="section-link" href="${pageContext.request.contextPath}/orders">注文履歴を確認 →</a></c:otherwise></c:choose>
+            </div>
+        </div>
+        <c:choose><c:when test="${empty reviews.entries}"><div class="account-empty"><span aria-hidden="true">☆</span><h3>最初のひとことを、ここに。</h3><p>遊んで感じたことを、ほかのプレイヤーにも届けよう。</p></div></c:when><c:otherwise>
+            <div class="review-list"><c:forEach var="review" items="${reviews.entries}"><article class="panel review-card"><div class="review-card-header"><div><strong><c:out value="${review.username}" /></strong><span class="review-verified">注文完了済み</span></div><span class="review-date"><c:out value="${review.formattedCreatedAt}" /><c:if test="${review.edited}"> · 編集済み</c:if></span></div>
+                <span class="review-stars" aria-label="5点満点中${review.rating}点"><c:out value="${review.stars}" /></span><div class="review-body"><c:out value="${review.body}" /></div>
+                <c:if test="${not empty sessionScope.loginUser and review.userId == sessionScope.loginUser.id}"><a class="section-link" href="${pageContext.request.contextPath}/reviews/edit?gameId=${game.id}">このレビューを編集 →</a></c:if>
+            </article></c:forEach></div>
+        </c:otherwise></c:choose>
+        <%@ include file="/WEB-INF/jspf/review-pagination.jspf" %>
+    </c:otherwise></c:choose>
+</section>

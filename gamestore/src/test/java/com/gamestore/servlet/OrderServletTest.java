@@ -14,6 +14,25 @@ import com.gamestore.util.CheckoutTokens;
 import junit.framework.TestCase;
 
 public class OrderServletTest extends TestCase {
+    public void testNewlyOwnedCartGameBlocksStaleOrderConfirmationWithoutClearingCart() throws Exception {
+        MemoryOrders orders = new MemoryOrders(); WebFixture web = cart(orders);
+        web.attributes.put("ownedIds", java.util.Map.of("1", true));
+        Object original = web.sessionValues.get("cart"); OrderServlet servlet = new OrderServlet(new Games()); servlet.init(web.config);
+        servlet.doPost(web.request, web.response);
+        assertEquals(409, web.status); assertEquals(0, orders.saves); assertSame(original, web.sessionValues.get("cart"));
+        assertEquals(true, web.attributes.get("orderBlocked")); assertEquals("/checkout.jsp", web.forwarded);
+    }
+    public void testOwnershipRaceAtDatabaseReturnsConflictInsteadOfGenericFailure() throws Exception {
+        MemoryOrders orders = new MemoryOrders() {
+            @Override public synchronized String saveOnce(com.gamestore.model.Order order, String token) throws SQLException {
+                throw new com.gamestore.repository.AlreadyOwnedException();
+            }
+        };
+        WebFixture web = cart(orders); Object original = web.sessionValues.get("cart");
+        OrderServlet servlet = new OrderServlet(new Games()); servlet.init(web.config); servlet.doPost(web.request, web.response);
+        assertEquals(409, web.status); assertEquals(0, orders.saves); assertSame(original, web.sessionValues.get("cart"));
+        assertEquals(true, web.attributes.get("orderBlocked")); assertTrue(web.attributes.get("orderError").toString().contains("ライブラリ"));
+    }
     private static class Games extends JdbcGameRepository {
         Game available = new Game("1", "Game", 4800, "Adventure", "game.jpg");
         SQLException failure;

@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import com.gamestore.model.Order;
 import com.gamestore.repository.OrderRepository;
 import com.gamestore.util.AuthSession;
+import com.gamestore.service.OwnershipView;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -40,7 +41,11 @@ public class OrderCompleteServlet extends HttpServlet {
         try {
             order = orderRepository.findByIdForUser(orderId, AuthSession.currentUser(request).getId());
         } catch (SQLException | IOException | ClassNotFoundException e) {
-            throw new ServletException("Could not retrieve order", e);
+            getServletContext().log("Could not retrieve member order", e);
+            response.setStatus(503);
+            request.setAttribute("pageError", "注文情報を取得できませんでした。しばらくしてから注文履歴を確認してください。");
+            request.getRequestDispatcher("/order-complete.jsp").forward(request, response);
+            return;
         }
 
         // 5. 주문이 없다면 404
@@ -51,6 +56,7 @@ public class OrderCompleteServlet extends HttpServlet {
 
         // 6. request에 order 전달
         request.setAttribute("order", order);
+        request.setAttribute("repurchaseBlocked", order.isPending() && OwnershipView.overlaps(request, order.getGames()));
 
         // 7. /order-complete.jsp로 forward()
         request.getRequestDispatcher("/order-complete.jsp").forward(request, response);

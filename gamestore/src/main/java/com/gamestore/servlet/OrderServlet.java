@@ -10,6 +10,8 @@ import com.gamestore.model.User;
 import com.gamestore.repository.JdbcGameRepository;
 import com.gamestore.repository.OrderRepository;
 import com.gamestore.repository.CatalogConflictException;
+import com.gamestore.repository.AlreadyOwnedException;
+import com.gamestore.service.OwnershipView;
 import com.gamestore.service.CartCatalog;
 import com.gamestore.util.AuthSession;
 import com.gamestore.util.CheckoutTokens;
@@ -50,6 +52,10 @@ public class OrderServlet extends HttpServlet {
                 return;
             }
             List<Game> current = CartCatalog.refresh(cart, games);
+            if (OwnershipView.overlaps(request, current)) {
+                error(request, response, current, 409, "すでにライブラリにあるゲームが含まれています。カートから該当するゲームを削除してください。", true);
+                return;
+            }
             if (CartCatalog.blocked(current)) {
                 CheckoutTokens.refreshIfCurrent(session, intent, current);
                 error(request, response, current, 409, "販売休止中の商品、または金額上限を超える商品があります。カートを確認してください。", true);
@@ -76,6 +82,8 @@ public class OrderServlet extends HttpServlet {
             String orderId = orders.saveOnce(new Order(UUID.randomUUID().toString(), current, total, user.getId()), token);
             CheckoutTokens.complete(session, intent);
             complete(request, response, orderId);
+        } catch (AlreadyOwnedException e) {
+            error(request, response, cart, 409, "すでにライブラリにあるゲームが含まれています。カートを確認するか、ライブラリからゲームをご覧ください。", true);
         } catch (CatalogConflictException e) {
             error(request, response, cart, 409, "商品の価格または販売状況が変更されました。カートで最新の内容を確認してください。", true);
         } catch (SQLException | IOException | ClassNotFoundException e) {

@@ -9,6 +9,7 @@
 <c:set var="navSection" value="admin" />
 <%@ include file="/WEB-INF/jspf/header.jspf" %>
 <main>
+<%@ include file="/WEB-INF/jspf/admin-nav.jspf" %>
 <div class="page-heading admin-heading"><div><span class="eyebrow">BEHIND THE LITTLE GAME SHELF</span><h1>ゲーム管理</h1><p>新しい一本を、ストアの棚に並べよう。</p></div><a class="button button-secondary button-small" href="${pageContext.request.contextPath}/home">ストアを見る ↗</a></div>
 <c:if test="${param.created == '1'}"><p class="auth-success" role="status">ゲームを登録しました。ゲーム一覧に表示されます。</p></c:if><c:if test="${not empty error}"><p class="auth-error" role="alert"><c:out value="${error}" /></p></c:if>
 <c:if test="${param.updated == '1'}"><p class="auth-success" role="status">ゲーム情報を保存しました。</p></c:if><c:if test="${param.statusUpdated == '1'}"><p class="auth-success" role="status">販売状況を更新しました。</p></c:if>

@@ -7,6 +7,10 @@ import java.util.List;
 import com.gamestore.model.Order;
 
 public interface OrderRepository {
+    OrderChangeResult completeDemoForUser(String orderId, long userId) throws SQLException, IOException, ClassNotFoundException;
+
+    OrderChangeResult cancelPendingForUser(String orderId, long userId) throws SQLException, IOException, ClassNotFoundException;
+
     void save(Order order) throws SQLException, IOException, ClassNotFoundException;
 
     String saveOnce(Order order, String checkoutToken) throws SQLException, IOException, ClassNotFoundException;

@@ -11,6 +11,21 @@ public class Order {
    private final int totalPrice;
    private final LocalDateTime createdAt;
    private final Long userId;
+   private final OrderStatus status;
+   private final LocalDateTime completedAt;
+   private final LocalDateTime cancelledAt;
+
+   public OrderStatus getStatus() { return status; }
+   public boolean isPending() { return status == OrderStatus.PENDING; }
+   public boolean isCompleted() { return status == OrderStatus.COMPLETED; }
+   public boolean isCancelled() { return status == OrderStatus.CANCELLED; }
+   public LocalDateTime getCompletedAt() { return completedAt; }
+   public LocalDateTime getCancelledAt() { return cancelledAt; }
+   public String getFormattedCompletedAt() { return format(completedAt); }
+   public String getFormattedCancelledAt() { return format(cancelledAt); }
+   private static String format(LocalDateTime time) {
+       return time == null ? "" : time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+   }
 
    public Long getUserId() {
        return userId;
@@ -46,10 +61,18 @@ public class Order {
    }
 
    public Order(String orderId, List<Game> games, int totalPrice, Long userId, LocalDateTime createdAt) {
+       this(orderId, games, totalPrice, userId, createdAt, OrderStatus.PENDING, null, null);
+   }
+
+   public Order(String orderId, List<Game> games, int totalPrice, Long userId, LocalDateTime createdAt,
+           OrderStatus status, LocalDateTime completedAt, LocalDateTime cancelledAt) {
        this.orderId = orderId;
        this.games = new ArrayList<>(games);
        this.totalPrice = totalPrice;
        this.createdAt = createdAt;
        this.userId = userId;
+       this.status = java.util.Objects.requireNonNull(status);
+       this.completedAt = completedAt;
+       this.cancelledAt = cancelledAt;
    }
 }

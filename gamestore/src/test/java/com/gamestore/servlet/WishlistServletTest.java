@@ -9,6 +9,33 @@ import com.gamestore.support.WebFixture;
 import junit.framework.TestCase;
 
 public class WishlistServletTest extends TestCase {
+    public void testJsonMutationsReturnConfirmedStateWithoutRedirectAndIgnoreSubmittedMember()throws Exception {
+        for(String action:new String[]{"add","remove"}) {
+            WebFixture web=member("/wishlist/"+action);web.requestHeaders.put("Accept","application/json");web.parameters.put("userId","999");
+            web.parameters.put("returnTo","https://evil.example/");Wishes wishes=new Wishes();call(web,wishes,true);
+            assertEquals(200,web.status);assertNull(web.redirect);assertEquals(7L,wishes.user);
+            assertEquals("application/json",web.contentType);assertEquals("UTF-8",web.characterEncoding);assertEquals("no-store",web.responseHeaders.get("Cache-Control"));
+            assertEquals("{\"gameId\":1,\"saved\":"+action.equals("add")+"}",web.responseBody.toString());
+        }
+    }
+    public void testJsonInvalidOrMissingGameIsAnErrorWithoutMutationOrRedirect()throws Exception {
+        for(String id:new String[]{"invalid","0","999"}) {
+            WebFixture web=member("/wishlist/add");web.requestHeaders.put("Accept","application/json");web.parameters.put("gameId",id);Wishes wishes=new Wishes();call(web,wishes,true);
+            assertEquals(id.equals("999")?404:400,web.status);assertNull(web.redirect);assertEquals("application/json",web.contentType);
+            assertTrue(web.responseBody.toString().contains(id.equals("999")?"game_not_found":"invalid_game"));
+        }
+    }
+    public void testJsonDatabaseFailureDoesNotClaimSavedStateOrExposeDetails()throws Exception {
+        WebFixture web=member("/wishlist/add");web.requestHeaders.put("Accept","application/json");Wishes wishes=new Wishes();wishes.failure=new SQLException("private database details");call(web,wishes,true);
+        assertEquals(503,web.status);assertNull(web.redirect);assertTrue(web.responseBody.toString().contains("save_unconfirmed"));
+        assertFalse(web.responseBody.toString().contains("private"));assertFalse(web.responseBody.toString().contains("\"saved\""));
+    }
+    public void testJsonDirectGuestInvocationAndWrongEndpointDoNotMutate()throws Exception {
+        WebFixture guest=new WebFixture();guest.path="/wishlist/add";guest.requestHeaders.put("Accept","application/json");Wishes wishes=new Wishes();call(guest,wishes,true);
+        assertEquals(401,guest.status);assertEquals(0,wishes.adds);assertTrue(guest.responseBody.toString().contains("login_required"));
+        WebFixture wrong=member("/wishlist");wrong.requestHeaders.put("Accept","application/json");call(wrong,wishes,true);
+        assertEquals(405,wrong.status);assertEquals(0,wishes.adds);assertTrue(wrong.responseBody.toString().contains("method_not_allowed"));
+    }
     private static class Wishes extends JdbcWishlistRepository {
         long user; int id; int adds; int removes; int page;
         SQLException failure;

@@ -18,6 +18,11 @@ public class CatalogDatabaseSetup {
                 stmt.execute(Files.readString(Path.of("sql", "012_add_game_sale_status.sql")));
                 stmt.execute(Files.readString(Path.of("sql", "014_order_checkout_tokens.sql")));
                 stmt.execute(Files.readString(Path.of("sql", "015_create_wishlist.sql")));
+                stmt.execute(Files.readString(Path.of("sql", "016_order_status.sql")));
+                stmt.execute(Files.readString(Path.of("sql", "017_create_reviews.sql")));
+                stmt.execute(Files.readString(Path.of("sql", "018_game_details.sql")));
+                stmt.execute(Files.readString(Path.of("sql", "019_seed_game_details.sql")));
+                stmt.execute(Files.readString(Path.of("sql", "020_seed_catalog_metadata.sql")));
                 System.out.println("Catalog and member-feature migrations applied. No account was promoted.");
             }
             try (ResultSet columns = conn.getMetaData().getColumns(null, conn.getSchema(), "games", null)) {
