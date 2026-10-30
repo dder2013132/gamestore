@@ -9,7 +9,7 @@ public class DbConnectionTest {
     public static void main(String[] args) {
 
         // 여기에 JDBC 연결 코드 작성
-        String url = "jdbc:postgresql://localhost:5432/playport_db";
+        String url = "jdbc:postgresql://localhost:5432/playport_restore";
         String user = "postgres";
         String password = System.getenv("PLAYPORT_DB_PASSWORD");
 
