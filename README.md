@@ -10,11 +10,11 @@ PLAYPORT는 게임을 탐색하고, 찜하거나 장바구니에 담고, 주문 
 
 | 홈 | 게임 목록 |
 | --- | --- |
-| ![홈 화면](docs/previews/home-desktop.jpg) | ![게임 목록 화면](docs/previews/browse-desktop.jpg) |
+| ![홈 화면](gamestore/docs/previews/home-desktop.jpg) | ![게임 목록 화면](gamestore/docs/previews/browse-desktop.jpg) |
 
 | 게임 상세 및 리뷰 | 관리자 대시보드 |
 | --- | --- |
-| ![게임 리뷰](docs/previews/game-reviews-desktop.jpg) | ![관리자 대시보드](docs/previews/admin-dashboard-desktop.jpg) |
+| ![게임 리뷰](gamestore/docs/previews/game-reviews-desktop.jpg) | ![관리자 대시보드](gamestore/docs/previews/admin-dashboard-desktop.jpg) |
 
 ## ✨ 주요 기능
 
@@ -84,11 +84,18 @@ JSP + JSTL ──────────── 서버 측 화면 렌더링
 - PostgreSQL
 - Tomcat 10.1
 
-### 1. 데이터베이스 설정
+### 1. 프로젝트 폴더 이동 및 데이터베이스 설정
 
-PostgreSQL에 프로젝트용 데이터베이스를 준비한 뒤 `sql/` 디렉터리의 스키마 및 마이그레이션 SQL을 **파일 번호와 의존 관계에 맞게** 적용합니다. 일부 SQL은 기존 스키마를 전제로 하므로 신규 데이터베이스에서의 초기 설정은 별도 확인이 필요합니다.
+저장소를 클론한 경우, 먼저 Maven 프로젝트 폴더로 이동합니다.
 
-`db.properties.example`을 복사해 `db.properties`를 만들고 접속 정보를 입력합니다.
+```powershell
+cd gamestore
+```
+
+
+PostgreSQL에 프로젝트용 데이터베이스를 준비한 뒤 `gamestore/sql/` 디렉터리의 스키마 및 마이그레이션 SQL을 **파일 번호와 의존 관계에 맞게** 적용합니다. 일부 SQL은 기존 스키마를 전제로 하므로 신규 데이터베이스에서의 초기 설정은 별도 확인이 필요합니다.
+
+`gamestore/db.properties.example`을 복사해 `db.properties`를 만들고 접속 정보를 입력합니다.
 
 ```properties
 db.url=jdbc:postgresql://localhost:5432/gamestore
